@@ -12,6 +12,15 @@ yarn dev
 pnpm dev
 # or
 bun dev
+
+
+user
+email oo@example.com
+psw   oo
+
+email lollo@exammple.it
+psw   aa
+
 ```
 
 Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
