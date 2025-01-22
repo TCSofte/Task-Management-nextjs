@@ -1,101 +1,207 @@
+"use client";
+
 import Image from "next/image";
+import { useState } from "react";
 
 export default function Home() {
+  const [isLogin, setIsLogin] = useState(true);
+
+  // Stato per il login
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [loginError, setLoginError] = useState<string | null>(null);
+
+  // Stato per la registrazione
+  const [registerData, setRegisterData] = useState({
+    username: "",
+    email: "",
+    password: "",
+
+  });
+  const [registerError, setRegisterError] = useState<string | null>(null);
+  const [registerSuccess, setRegisterSuccess] = useState<string | null>(null);
+
+  // Funzione per il login
+  const handleLogin = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setLoginError(null);
+
+    try {
+      const response = await fetch("/api/login", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email, password }),
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        setLoginError(data.message || "Errore durante il login");
+        return;
+      }
+
+      localStorage.setItem("token", data.token);
+      localStorage.setItem("user", data.user.username);
+
+      window.location.href = "/dashboard";
+    } catch (err) {
+      console.error(err);
+      setLoginError("Errore durante il login");
+    }
+  };
+
+  // Funzione per gestire il cambiamento degli input di registrazione
+  const handleRegisterChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const { name, value } = e.target;
+    setRegisterData((prevData) => ({
+      ...prevData,
+      [name]: value,
+    }));
+  };
+
+  // Funzione per la registrazione
+  const handleRegister = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setRegisterError(null);
+    setRegisterSuccess(null);
+
+  
+    try {
+      const response = await fetch("/api/register", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          username: registerData.username,
+          email: registerData.email,
+          password: registerData.password,
+        }),
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        setRegisterError(data.message || "Errore durante la registrazione");
+        return;
+      }
+
+      setRegisterSuccess("Registrazione completata con successo!");
+      setRegisterData({
+        username: "",
+        email: "",
+        password: "",
+       
+      });
+    } catch (err) {
+      console.error(err);
+      setRegisterError("Errore durante la registrazione");
+    }
+  };
+
   return (
     <div className="grid grid-rows-[20px_1fr_20px] items-center justify-items-center min-h-screen p-8 pb-20 gap-16 sm:p-20 font-[family-name:var(--font-geist-sans)]">
       <main className="flex flex-col gap-8 row-start-2 items-center sm:items-start">
-        <Image
-          className="dark:invert"
-          src="/next.svg"
-          alt="Next.js logo"
-          width={180}
-          height={38}
-          priority
-        />
-        <ol className="list-inside list-decimal text-sm text-center sm:text-left font-[family-name:var(--font-geist-mono)]">
-          <li className="mb-2">
-            Get started by editing{" "}
-            <code className="bg-black/[.05] dark:bg-white/[.06] px-1 py-0.5 rounded font-semibold">
-              src/app/page.tsx
-            </code>
-            .
-          </li>
-          <li>Save and see your changes instantly.</li>
-        </ol>
+        <h1 className="text-3xl font-bold mb-4">Welcome</h1>
+        <h3 className="text-3xl font-bold mb-4">Task Management App</h3>
 
-        <div className="flex gap-4 items-center flex-col sm:flex-row">
-          <a
-            className="rounded-full border border-solid border-transparent transition-colors flex items-center justify-center bg-foreground text-background gap-2 hover:bg-[#383838] dark:hover:bg-[#ccc] text-sm sm:text-base h-10 sm:h-12 px-4 sm:px-5"
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
+        {/* Toggle tra Login e Register */}
+        <div className="flex gap-4 mb-4">
+          <button
+            className={`px-4 py-2 rounded-full ${
+              isLogin ? "bg-blue-500 text-white" : "bg-gray-300"
+            }`}
+            onClick={() => setIsLogin(true)}
           >
-            <Image
-              className="dark:invert"
-              src="/vercel.svg"
-              alt="Vercel logomark"
-              width={20}
-              height={20}
-            />
-            Deploy now
-          </a>
-          <a
-            className="rounded-full border border-solid border-black/[.08] dark:border-white/[.145] transition-colors flex items-center justify-center hover:bg-[#f2f2f2] dark:hover:bg-[#1a1a1a] hover:border-transparent text-sm sm:text-base h-10 sm:h-12 px-4 sm:px-5 sm:min-w-44"
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
+            Login
+          </button>
+          <button
+            className={`px-4 py-2 rounded-full ${
+              !isLogin ? "bg-blue-500 text-white" : "bg-gray-300"
+            }`}
+            onClick={() => setIsLogin(false)}
           >
-            Read our docs
-          </a>
+            Register
+          </button>
         </div>
+
+        {/* Login Form */}
+        {isLogin ? (
+          <form
+            className="flex flex-col gap-4 w-full sm:w-96"
+            onSubmit={handleLogin}
+          >
+            <input
+              type="email"
+              placeholder="Email"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              className="px-4 py-2 border border-gray-300 rounded-md"
+              required
+            />
+            <input
+              type="password"
+              placeholder="Password"
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              className="px-4 py-2 border border-gray-300 rounded-md"
+              required
+            />
+            {loginError && <p className="text-red-500 text-sm">{loginError}</p>}
+            <button
+              type="submit"
+              className="bg-blue-500 text-white rounded-full py-2 mt-4"
+            >
+              Login
+            </button>
+          </form>
+        ) : (
+          // Registration Form
+          <form
+            className="flex flex-col gap-4 w-full sm:w-96"
+            onSubmit={handleRegister}
+          >
+            <input
+              type="text"
+              name="username"
+              placeholder="User Name"
+              value={registerData.username}
+              onChange={handleRegisterChange}
+              className="px-4 py-2 border border-gray-300 rounded-md"
+              required
+            />
+            <input
+              type="email"
+              name="email"
+              placeholder="Email"
+              value={registerData.email}
+              onChange={handleRegisterChange}
+              className="px-4 py-2 border border-gray-300 rounded-md"
+              required
+            />
+            <input
+              type="password"
+              name="password"
+              placeholder="Password"
+              value={registerData.password}
+              onChange={handleRegisterChange}
+              className="px-4 py-2 border border-gray-300 rounded-md"
+              required
+            />
+      
+            {registerError && (
+              <p className="text-red-500 text-sm">{registerError}</p>
+            )}
+            {registerSuccess && (
+              <p className="text-green-500 text-sm">{registerSuccess}</p>
+            )}
+            <button
+              type="submit"
+              className="bg-blue-500 text-white rounded-full py-2 mt-4"
+            >
+              Register
+            </button>
+          </form>
+        )}
       </main>
-      <footer className="row-start-3 flex gap-6 flex-wrap items-center justify-center">
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/file.svg"
-            alt="File icon"
-            width={16}
-            height={16}
-          />
-          Learn
-        </a>
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/window.svg"
-            alt="Window icon"
-            width={16}
-            height={16}
-          />
-          Examples
-        </a>
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://nextjs.org?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/globe.svg"
-            alt="Globe icon"
-            width={16}
-            height={16}
-          />
-          Go to nextjs.org →
-        </a>
-      </footer>
     </div>
   );
 }
